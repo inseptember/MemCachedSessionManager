@@ -1,0 +1,11 @@
+<m>
+	<pool name="pool1" initConn="10" minConn="5" maxConn="250" maxIdle="3000" maintSleep="3000" nagle="false">
+		<server weight="3">10.168.2.141:11211</server>
+	</pool>
+	
+	<client name="client1" defaultEncoding="UTF-8" pool="pool1"></client>
+	
+	<cluster name="cluster1" mode="active">
+		<clients>client1</clients>
+	</cluster>
+</m>
