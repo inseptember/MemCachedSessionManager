@@ -6,7 +6,7 @@ public class ClientConfig {
 	
 	private String defaultEncoding = "UTF-8";
 	
-	private String poolName;
+	private String poolName = "default";
 	
 	private String transCode = "com.genscript.cache.util.KryoObjectTransCoder";
 	

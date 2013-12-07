@@ -12,8 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import com.genscript.cache.IClientManager;
 import com.genscript.cache.memcached.config.ClientClusterConfig;
+import com.genscript.cache.memcached.config.ClientConfig;
 import com.genscript.cache.memcached.config.ClientSocketPoolConfig;
 import com.genscript.cache.util.LoadFileUtil;
+import com.whalin.MemCached.MemCachedClient;
 import com.whalin.MemCached.SockIOPool;
 
 public class MemCachedClientCacheManager implements IClientManager<MemCachedClientCache>{
@@ -22,6 +24,7 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 	
 	private List<ClientSocketPoolConfig> clientSocketPoolConfigs; 
 	private List<ClientClusterConfig> clientClusterConfigs; 
+	private List<ClientConfig> clientConfigs;
 	private ConcurrentHashMap<String, SockIOPool> socketPools;
 	
 	private static String MEM_CACHED_CONFIG_FILE = "memcached.xml";
@@ -30,13 +33,15 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 
 	public void loadConfigFile(String fileName) {
 		clientSocketPoolConfigs = new ArrayList<ClientSocketPoolConfig>();
+		clientConfigs = new ArrayList<ClientConfig>();
+		clientClusterConfigs = new ArrayList<ClientClusterConfig>();
 		socketPools = new ConcurrentHashMap<String, SockIOPool>();
 		
 		try {
 			SAXReader reader = new SAXReader();
 			ClassLoader loader = Thread.currentThread().getContextClassLoader();
 			URL url = loader.getResource(fileName);
-			LoadFileUtil.transferConfigByFile(reader, url, clientSocketPoolConfigs, clientClusterConfigs);
+			LoadFileUtil.transferConfigByFile(reader, url, clientSocketPoolConfigs, clientClusterConfigs, clientConfigs);
 		} catch (Exception e) {
 			logger.error("load config file failed", e);
 		}
@@ -58,6 +63,10 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 			
 			socketPools.put(poolConfig.getName(), pool);
 			logger.info(new StringBuilder().append(" new socket Pool add :").append(poolConfig.getName()).toString());
+		}
+		
+		for(ClientConfig client : clientConfigs){
+			MemCachedClient mcc = new MemCachedClient(client.getPoolName());
 		}
 	}
 
@@ -99,14 +108,6 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 		loadConfigFile(MEM_CACHED_CONFIG_FILE);
 	}
 
-	public void setConfigFile(String configFile) {
-		this.configFile = configFile;
-	}
-
-	public String getConfigFile() {
-		return configFile;
-	}
-
 	public void startUp() {
 		this.loadConfigFile(configFile);
 		this.initialize();
@@ -126,6 +127,22 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 
 	public List<ClientClusterConfig> getClientClusterConfigs() {
 		return clientClusterConfigs;
+	}
+
+	public List<ClientConfig> getClientConfigs() {
+		return clientConfigs;
+	}
+
+	public void setClientConfigs(List<ClientConfig> clientConfigs) {
+		this.clientConfigs = clientConfigs;
+	}
+	
+	public void setConfigFile(String configFile) {
+		this.configFile = configFile;
+	}
+	
+	public String getConfigFile() {
+		return configFile;
 	}
 
 }

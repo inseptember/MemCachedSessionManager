@@ -2,7 +2,7 @@ package com.genscript.cache.memcached.config;
 
 public class ClientSocketPoolConfig {
 	
-	private String name;
+	private String name = "default";
 	
 	/**
 	 * 缓存服务器IP:Port地址，以逗号分割

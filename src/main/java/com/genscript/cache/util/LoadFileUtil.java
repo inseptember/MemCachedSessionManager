@@ -18,40 +18,52 @@ public class LoadFileUtil {
 		try {
 			Element root = reader.read(url).getRootElement();
 			
-			List<Element> poolElements = root.elements("pool");
+			List<Element> elements = root.elements();
 			
-			for(Element ele : poolElements){
-				ClientSocketPoolConfig config = new ClientSocketPoolConfig();
-				
-				List<Element> serverElements = ele.elements("server");
-				List<String> servers = new ArrayList<String>(), weights = new ArrayList<String>();
-				for(Element serverElement : serverElements){
-					servers.add(serverElement.getText());
-					weights.add(serverElement.attributeValue("weight"));
+			for(Element ele : elements){
+				ClientSocketPoolConfig poolConfig = null;
+				ClientConfig clientConfig = null;
+				ClientClusterConfig clusterConfig = null;
+				if("pool".equals(ele.getName())){
+					poolConfig = new ClientSocketPoolConfig();
+					poolConfig.setName((String) getObject(poolConfig.getName(), ele.attributeValue("name")));
+					poolConfig.setInitConn((Integer) getObject(poolConfig.getInitConn(), ele.attributeValue("initConn")));
+					poolConfig.setMinConn((Integer) getObject(poolConfig.getMinConn(), ele.attributeValue("minConn")));
+					poolConfig.setMaxConn((Integer) getObject(poolConfig.getMaxConn(), ele.attributeValue("maxConn")));
+					poolConfig.setMaxIdle((Integer) getObject(poolConfig.getMaxIdle(), ele.attributeValue("maxIdle")));
+					poolConfig.setMaintSleep((Integer) getObject(poolConfig.getMaintSleep(), ele.attributeValue("maintSleep")));
+					poolConfig.setNagle((Boolean)getObject(poolConfig.isNagle(), ele.attributeValue("nagle")));
+					poolConfigs.add(poolConfig);
+				}else if("client".equals(ele.getName())){
+					clientConfig = new ClientConfig();
+					clientConfig.setName(ele.attributeValue("name"));
+					clientConfig.setPoolName((String) getObject(clientConfig.getPoolName(), ele.attributeValue("pool")));
+					clientConfig.setDefaultEncoding((String) getObject(clientConfig.getDefaultEncoding(), ele.attributeValue("defaultEncoding")));
+					clientConfig.setTransCode((String) getObject(clientConfig.getTransCode(), ele.attributeValue("transCode")));
+					clientConfig.setErrorHandler((String) getObject(clientConfig.getErrorHandler(), ele.attributeValue("errorHandler")));
+					clientConfigs.add(clientConfig);
+				}else if("cluster".equals(ele.getName())){
+					clusterConfig = new ClientClusterConfig();
+					clusterConfig.setName(ele.attributeValue("name"));
+					clusterConfig.setMode((String) getObject(clusterConfig.getMode(), ele.attributeValue("mode")));
+					clusterConfigs.add(clusterConfig);
 				}
-				config.setServices(servers.toArray(new String[servers.size()]));
-				config.setWeights(weights.toArray(new String[weights.size()]));
 				
-				config.setName((String) getObject(config.getName(), ele.attributeValue("name")));
-				config.setInitConn((Integer) getObject(config.getInitConn(), ele.attributeValue("initConn")));
-				config.setMinConn((Integer) getObject(config.getMinConn(), ele.attributeValue("minConn")));
-				config.setMaxConn((Integer) getObject(config.getMaxConn(), ele.attributeValue("maxConn")));
-				config.setMaxIdle((Integer) getObject(config.getMaxIdle(), ele.attributeValue("maxIdle")));
-				config.setMaintSleep((Integer) getObject(config.getMaintSleep(), ele.attributeValue("maintSleep")));
-				config.setNagle((Boolean)getObject(config.isNagle(), ele.attributeValue("nagle")));
-				poolConfigs.add(config);
+				List<Element> children = ele.elements();
+				StringBuilder servers = new StringBuilder(), weights = new StringBuilder(), clients = new StringBuilder();
+				for(Element child : children){
+					if("server".equals(child.getName())){
+						servers.append(child.getText()).append(",");
+						weights.append(child.attributeValue("weight")).append(",");
+					}else if("clients".equals(child.getName())){
+						clients.append(child.getText()).append(",");
+					}
+				}
+				poolConfig.setServices(servers.subSequence(0, servers.length() - 1).toString().split(","));
+				poolConfig.setWeights(weights.subSequence(0, weights.length() - 1).toString().split(","));
+				clusterConfig.setClients(clients.subSequence(0, clients.length() - 1).toString().split(","));
 			}
 			
-			List<Element> clientElements = root.elements("client");
-			for(Element ele : clientElements){
-				ClientConfig config = new ClientConfig();
-				config.setName((String) getObject(config.getName(), ele.attributeValue("name")));
-				config.setPoolName((String) getObject(config.getPoolName(), ele.attributeValue("pool")));
-				config.setDefaultEncoding((String) getObject(config.getDefaultEncoding(), ele.attributeValue("defaultEncoding")));
-				config.setTransCode((String) getObject(config.getTransCode(), ele.attributeValue("transCode")));
-				config.setErrorHandler((String) getObject(config.getErrorHandler(), ele.attributeValue("errorHandler")));
-				clientConfigs.add(config);
-			}
 		} catch (Exception e) {
 			throw new RuntimeException("MemcachedManager loadConfig error !");
 		}
