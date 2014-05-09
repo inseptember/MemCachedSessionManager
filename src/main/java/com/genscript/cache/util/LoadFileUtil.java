@@ -40,7 +40,7 @@ public class LoadFileUtil {
 					clientConfig.setPoolName((String) getObject(clientConfig.getPoolName(), ele.attributeValue("pool")));
 					clientConfig.setDefaultEncoding((String) getObject(clientConfig.getDefaultEncoding(), ele.attributeValue("defaultEncoding")));
 					clientConfig.setTransCode((String) getObject(clientConfig.getTransCode(), ele.attributeValue("transCode")));
-					clientConfig.setErrorHandler((String) getObject(clientConfig.getErrorHandler(), ele.attributeValue("errorHandler")));
+//					clientConfig.setErrorHandler((String) getObject(clientConfig.getErrorHandler(), ele.attributeValue("errorHandler")));
 					clientConfigs.add(clientConfig);
 				}else if("cluster".equals(ele.getName())){
 					clusterConfig = new ClientClusterConfig();
@@ -59,9 +59,13 @@ public class LoadFileUtil {
 						clients.append(child.getText()).append(",");
 					}
 				}
-				poolConfig.setServices(servers.subSequence(0, servers.length() - 1).toString().split(","));
-				poolConfig.setWeights(weights.subSequence(0, weights.length() - 1).toString().split(","));
-				clusterConfig.setClients(clients.subSequence(0, clients.length() - 1).toString().split(","));
+				if(poolConfig!=null){
+					poolConfig.setServices(servers.subSequence(0, servers.length() - 1).toString().split(","));
+					poolConfig.setWeights(weights.subSequence(0, weights.length() - 1).toString().split(","));
+				}
+				if(clusterConfig!=null){
+					clusterConfig.setClients(clients.subSequence(0, clients.length() - 1).toString().split(","));
+				}
 			}
 			
 		} catch (Exception e) {
@@ -76,7 +80,7 @@ public class LoadFileUtil {
 				ret = Integer.valueOf(target);
 			}else if(def instanceof Boolean){
 				ret = Boolean.valueOf(target);
-			}else{
+			}else if(target != null){
 				ret = target;
 			}
 		} catch (Exception e) {

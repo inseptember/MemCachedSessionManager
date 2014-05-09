@@ -10,15 +10,11 @@ import com.genscript.cache.util.KryoObjectTransCoder;
 import com.whalin.MemCached.MemCachedClient;
 import com.whalin.MemCached.SockIOPool;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 /**
  * Unit test for simple App.
  */
 public class AppTest 
-    extends TestCase
 {
 	protected static MemCachedClient mcc = new MemCachedClient(true);
 	
@@ -46,21 +42,11 @@ public class AppTest
 	}
 	
 	public static void buildCache(){
-		HashMap<String, List<Object>> p = new LinkedHashMap<String, List<Object>>();
-		p.put("dd", new ArrayList<Object>());
-		SysMsgs s = new SysMsgs();
-		s.setContent("ccc");
-		s.setFrom(23);
-		s.setTt(p);
-		
-		List<SysMsgs> list = new ArrayList<SysMsgs>();
-		list.add(s);
-		mcc.set("test", list, new Date(10 * 1000));
 	}
 	
 	public static void output(){
-		List<SysMsgs> v = (List<SysMsgs>) mcc.get("test");
-		System.out.println(v.size());
+		Object v = (Object) mcc.get("9A2D846D7D3FF8CAC5894BAA30C93845OrderItemList");
+		System.out.println(v);
 	}
 	
 	public static void main(String[] args) {

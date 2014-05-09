@@ -11,14 +11,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.genscript.cache.IClientManager;
+import com.genscript.cache.IMemCachedCache;
 import com.genscript.cache.memcached.config.ClientClusterConfig;
 import com.genscript.cache.memcached.config.ClientConfig;
 import com.genscript.cache.memcached.config.ClientSocketPoolConfig;
 import com.genscript.cache.util.LoadFileUtil;
+import com.schooner.MemCached.MemcachedItem;
+import com.schooner.MemCached.TransCoder;
 import com.whalin.MemCached.MemCachedClient;
 import com.whalin.MemCached.SockIOPool;
 
-public class MemCachedClientCacheManager implements IClientManager<MemCachedClientCache>{
+public class MemCachedClientCacheManager implements IClientManager<IMemCachedCache>{
 	
 	Logger logger = LoggerFactory.getLogger(MemCachedClientCacheManager.class);
 	
@@ -26,8 +29,9 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 	private List<ClientClusterConfig> clientClusterConfigs; 
 	private List<ClientConfig> clientConfigs;
 	private ConcurrentHashMap<String, SockIOPool> socketPools;
+	private ConcurrentHashMap<String, IMemCachedCache> cachePools;
 	
-	private static String MEM_CACHED_CONFIG_FILE = "memcached.xml";
+	public static String MEM_CACHED_CONFIG_FILE = "memcached.xml";
 	
 	private String configFile;
 
@@ -35,6 +39,7 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 		clientSocketPoolConfigs = new ArrayList<ClientSocketPoolConfig>();
 		clientConfigs = new ArrayList<ClientConfig>();
 		clientClusterConfigs = new ArrayList<ClientClusterConfig>();
+		cachePools = new ConcurrentHashMap<String, IMemCachedCache>();
 		socketPools = new ConcurrentHashMap<String, SockIOPool>();
 		
 		try {
@@ -66,7 +71,27 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 		}
 		
 		for(ClientConfig client : clientConfigs){
-			MemCachedClient mcc = new MemCachedClient(client.getPoolName());
+			MemCachedClient cacheClient = new MemCachedClient(client.getPoolName(),true, false);
+			IMemCachedCache cache = new MemCachedClientCache(cacheClient);
+			try {
+				cacheClient.setDefaultEncoding(client.getDefaultEncoding());
+				cacheClient.setTransCoder((TransCoder) Class.forName(client.getTransCode()).newInstance());
+				cacheClient.setSanitizeKeys(false);
+				cachePools.put(client.getName(), cache);
+			} catch (Exception e) {
+				logger.error("initail client failed", e);
+			}
+		}
+		
+		for(ClientClusterConfig clusterConfig : clientClusterConfigs){
+			MemCachedClientCluster cluster = new MemCachedClientCluster();
+			cluster.setName(clusterConfig.getName());
+			cluster.setCaches(new ArrayList<IMemCachedCache>());
+			
+			for(String cacheName : clusterConfig.getClients()){
+				cluster.getCaches().add(cachePools.get(cacheName));
+				//TODO: 用于集群，暂时懒得写了。。。
+			}
 		}
 	}
 
@@ -87,13 +112,21 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 			if(clientSocketPoolConfigs!=null){
 				clientSocketPoolConfigs.clear();
 			}
+			if(clientConfigs!=null){
+				clientConfigs.clear();
+			}
+			if(clientClusterConfigs!=null){
+				clientClusterConfigs.clear();
+			}
+			if(cachePools!=null){
+				cachePools.clear();
+			}
 		}
 		
 	}
 
-	public MemCachedClientCache getCache(String name) {
-		// TODO Auto-generated method stub
-		return null;
+	public IMemCachedCache getCache(String name) {
+		return this.getCachePools().get(name);
 	}
 
 	public void setClientSocketPoolConfigs(List<ClientSocketPoolConfig> clientSocketPoolConfigs) {
@@ -143,6 +176,14 @@ public class MemCachedClientCacheManager implements IClientManager<MemCachedClie
 	
 	public String getConfigFile() {
 		return configFile;
+	}
+
+	public void setCachePools(ConcurrentHashMap<String, IMemCachedCache> caches) {
+		this.cachePools = caches;
+	}
+
+	public ConcurrentHashMap<String, IMemCachedCache> getCachePools() {
+		return cachePools;
 	}
 
 }

@@ -1,5 +1,9 @@
 package foo;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -11,12 +15,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 
 
-public class SysMsgs implements KryoSerializable{
-	SysMsgs() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
+public class SysMsgs implements Serializable{
 	/**
 	 * 
 	 */
@@ -88,6 +87,20 @@ public class SysMsgs implements KryoSerializable{
 
 	public void read(Kryo kryo, Input input) {
 		kryo.readObject(input, this.getClass());  
+	}
+	
+	public static void main(String[] args) throws Exception {
+		File f = new File("C:\\sys.bin");
+		OutputStream out = new FileOutputStream(f);
+		SysMsgs s = new SysMsgs();
+		s.setContent("00000000000000000000111111111111111111111111000000000000000000000000000000000000000000000000111111111111");
+		
+		Kryo k = new Kryo();
+		k.register(SysMsgs.class);
+		Output output = new Output(out);
+		k.writeClassAndObject(output, s);
+		out.flush();
+		output.close();
 	}
 
 }

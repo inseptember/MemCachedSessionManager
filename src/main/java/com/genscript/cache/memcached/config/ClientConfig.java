@@ -10,7 +10,7 @@ public class ClientConfig {
 	
 	private String transCode = "com.genscript.cache.util.KryoObjectTransCoder";
 	
-	private String errorHandler = "com.genscript.cache.memcached.MemCachedErrorHandler";
+//	private String errorHandler = "com.genscript.cache.memcached.MemCachedErrorHandler";
 
 	/**
 	 * @return the name
@@ -71,15 +71,15 @@ public class ClientConfig {
 	/**
 	 * @return the errorHandler
 	 */
-	public String getErrorHandler() {
-		return errorHandler;
-	}
+//	public String getErrorHandler() {
+//		return errorHandler;
+//	}
 
 	/**
 	 * @param errorHandler the errorHandler to set
 	 */
-	public void setErrorHandler(String errorHandler) {
-		this.errorHandler = errorHandler;
-	}
+//	public void setErrorHandler(String errorHandler) {
+//		this.errorHandler = errorHandler;
+//	}
 
 }
